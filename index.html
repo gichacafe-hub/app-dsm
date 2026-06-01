@@ -471,6 +471,28 @@
     <script>
         const API_URL = window.location.origin.includes('localhost') ? 'http://localhost:3000/sugarData' : '/sugarData';
         
+        // 테마 관리 기능
+        function initTheme() {
+            const savedTheme = localStorage.getItem('sugarApp_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeButton(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('sugarApp_theme', newTheme);
+            updateThemeButton(newTheme);
+        }
+
+        function updateThemeButton(theme) {
+            const btn = document.getElementById('themeToggle');
+            if (btn) {
+                btn.innerText = theme === 'light' ? '🌙 다크 모드' : '☀️ 라이트 모드';
+            }
+        }
+
         // 기기 고유 ID 및 사용자 이름 관리
         function initApp() {
             let deviceId = localStorage.getItem('sugarApp_deviceId');
