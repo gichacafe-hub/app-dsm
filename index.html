@@ -504,9 +504,18 @@
             if (nameInput) nameInput.value = USER_NAME;
 
             await migrateToBackend();
+            
+            // 날짜 기본값 설정 (로컬 시간 기준)
             const now = new Date();
-            document.getElementById('date').value = now.toISOString().split('T')[0];
-            document.getElementById('reportMonth').value = now.toISOString().slice(0, 7);
+            const offset = now.getTimezoneOffset() * 60000;
+            const localISOTime = new Date(now - offset).toISOString();
+            const today = localISOTime.split('T')[0];
+            const currentMonth = today.slice(0, 7);
+
+            document.getElementById('date').value = today;
+            document.getElementById('reportMonth').value = currentMonth;
+            document.getElementById('filterSpecificDate').value = today; // 히스토리 날짜 필터 기본값
+            
             setCurrentTime();
             setupTypeButtons();
             await loadData();
