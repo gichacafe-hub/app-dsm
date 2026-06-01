@@ -20,35 +20,56 @@
             --shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-color: #121212;
-                --card-bg: #1e1e1e;
-                --text-color: #e2e8f0;
-                --shadow: 0 4px 20px rgba(0,0,0,0.3);
-            }
-            
-            body { background-color: var(--bg-color); }
-            h2, h3 { color: #f1f5f9; }
-            .stats-column { background: #262626; border-color: #333; }
-            .stat-value { color: #f1f5f9; }
-            .stat-label { color: #94a3b8; }
-            
-            input, select, textarea {
-                background-color: #262626 !important;
-                color: #f1f5f9 !important;
-                border-color: #3f3f46 !important;
-            }
-            
-            .type-btn { background: #262626; color: #94a3b8; border-color: #3f3f46; }
-            .small-btn { background: #262626; color: #e2e8f0; border-color: #3f3f46; }
-            .date-header { background-color: #262626; border-color: #3f3f46; color: var(--secondary-color); }
-            .history-item { border-bottom-color: #2d2d2d; }
-            .memo-text { background: #2d2d2d; border-left-color: #4b5563; color: #cbd5e1; }
-            .report-table th { background-color: #262626; color: #94a3b8; }
-            .report-table td { border-bottom-color: #2d2d2d; color: #cbd5e1; }
-            #hba1cBox { background: #262626 !important; }
+        /* 다크 모드 스타일 (수동 전환용) */
+        [data-theme='dark'] {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e2e8f0;
+            --shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
+
+        [data-theme='dark'] body { background-color: var(--bg-color); }
+        [data-theme='dark'] h2, [data-theme='dark'] h3 { color: #f1f5f9; }
+        [data-theme='dark'] .stats-column { background: #262626; border-color: #333; }
+        [data-theme='dark'] .stat-value { color: #f1f5f9; }
+        [data-theme='dark'] .stat-label { color: #94a3b8; }
+        
+        [data-theme='dark'] input, [data-theme='dark'] select, [data-theme='dark'] textarea {
+            background-color: #262626 !important;
+            color: #f1f5f9 !important;
+            border-color: #3f3f46 !important;
+        }
+        
+        [data-theme='dark'] .type-btn { background: #262626; color: #94a3b8; border-color: #3f3f46; }
+        [data-theme='dark'] .small-btn { background: #262626; color: #e2e8f0; border-color: #3f3f46; }
+        [data-theme='dark'] .date-header { background-color: #262626; border-color: #3f3f46; color: var(--secondary-color); }
+        [data-theme='dark'] .history-item { border-bottom-color: #2d2d2d; }
+        [data-theme='dark'] .memo-text { background: #2d2d2d; border-left-color: #4b5563; color: #cbd5e1; }
+        [data-theme='dark'] .report-table th { background-color: #262626; color: #94a3b8; }
+        [data-theme='dark'] .report-table td { border-bottom-color: #2d2d2d; color: #cbd5e1; }
+        [data-theme='dark'] #hba1cBox { background: #262626 !important; }
+
+        /* 테마 스위치 스타일 */
+        .theme-switch-wrapper {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        .theme-switch-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            transition: all 0.2s;
+        }
+        .theme-switch-btn:active { transform: scale(0.95); }
 
         body {
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
@@ -477,6 +498,7 @@
         let isFirstLoad = true;
 
         document.addEventListener('DOMContentLoaded', async () => {
+            initTheme();
             // 사용자 이름 입력 필드 초기화
             const nameInput = document.getElementById('userName');
             if (nameInput) nameInput.value = USER_NAME;
