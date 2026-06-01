@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Diabetes Blood Sugar Management Manager PRO",
   "scripts": {
-    "start": "json-server --watch db.json --port 3000 --static ."
+    "start": "json-server --watch db.json --port $PORT --host 0.0.0.0 --static ."
   },
   "dependencies": {
     "json-server": "^0.17.4"
