@@ -4,7 +4,7 @@
   "description": "Diabetes Blood Sugar Management Manager PRO",
   "main": "index.html",
   "scripts": {
-    "start": "json-server --watch db.json --port 3000"
+    "start": "json-server --watch db.json --port 3000 --static ."
   },
   "dependencies": {
     "json-server": "^0.17.4"
