@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>당뇨 혈당 관리 매니저 PRO</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #27ae60;
+            --secondary-color: #2980b9;
+            --accent-color: #e67e22;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --border-radius: 16px;
+            --status-normal: #2ecc71;
+            --status-caution: #f1c40f;
+            --status-danger: #e74c3c;
+            --shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary-color), #219150);
+            color: white;
+            padding: env(safe-area-inset-top) 0 1.5rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 { margin: 1rem 0 0.5rem; font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
+
+        main {
+            width: 100%;
+            max-width: 600px;
+            padding: 1rem;
+            box-sizing: border-box;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.25rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.25rem;
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            margin-top: 0;
+            margin-bottom: 1.2rem;
+            color: var(--text-color);
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stats-container {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 380px) {
+            .stats-container { flex-direction: column; }
+        }
+
+        .stats-column {
+            flex: 1;
+            background: #fcfcfd;
+            border-radius: 12px;
+            border: 1px solid #edf0f2;
+            overflow: hidden;
+        }
+
+        .stat-header {
+            font-size: 0.8rem;
+            padding: 8px;
+            text-align: center;
+            margin: 0;
+            color: white;
+            font-weight: 700;
+        }
+
+        .stat-header.fasting { background-color: var(--status-normal); }
+        .stat-header.postprandial { background-color: var(--secondary-color); }
+
+        .stats-sub-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            padding: 12px 5px;
+        }
+
+        .stat-item { text-align: center; }
+        .stat-label { font-size: 0.65rem; color: #8e9aaf; margin-bottom: 4px; }
+        .stat-value { font-size: 1rem; font-weight: 700; color: var(--text-color); }
+
+        .form-group { margin-bottom: 1.2rem; }
+        label { display: block; margin-bottom: 0.6rem; font-weight: 600; font-size: 0.85rem; color: #5a6a85; }
+
+        input[type="date"], input[type="month"], input[type="time"], input[type="number"], input[type="text"], textarea, select {
+            width: 100%;
+            padding: 0.9rem;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            font-family: inherit;
+            background-color: #f8fafc;
+            transition: all 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
+        }
+
+        .flex-row { display: flex; gap: 12px; }
+        .flex-grow-1 { flex: 1; }
+
+        .type-selector { display: flex; gap: 10px; }
+        .type-btn {
+            flex: 1;
+            padding: 0.9rem;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            background: #fff;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.2s;
+            color: #64748b;
+        }
+        .type-btn.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
+
+        button.submit-btn {
+            width: 100%;
+            padding: 1.1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.2);
+            transition: all 0.2s;
+        }
+        button.submit-btn:active { transform: scale(0.98); box-shadow: none; }
+
+        .chart-container { height: 260px; margin-top: 1rem; position: relative; }
+
+        .filter-section { display: flex; gap: 8px; margin-bottom: 1rem; }
+        
+        @media (max-width: 480px) {
+            .filter-section { flex-wrap: wrap; }
+            .filter-section select { flex: 1; min-width: 45%; }
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.1rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .date-header {
+            background-color: #f8fafc;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--secondary-color);
+            margin-top: 1.8rem;
+            margin-bottom: 0.6rem;
+            display: flex;
+            justify-content: space-between;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .date-header:first-child { margin-top: 0; }
+        .history-info { flex: 1; padding-right: 10px; }
+        .memo-text { font-size: 0.8rem; color: #64748b; margin-top: 6px; padding: 6px 10px; background: #f1f5f9; border-radius: 6px; border-left: 3px solid #cbd5e1; }
+
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+
+        .level-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 800;
+            color: white;
+            font-size: 1rem;
+            min-width: 45px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .bg-normal { background-color: var(--status-normal); }
+        .bg-caution { background-color: var(--status-caution); }
+        .bg-danger { background-color: var(--status-danger); }
+
+        .type-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; margin-top: 6px; }
+        .type-fasting { background-color: #e8f5e9; color: #2e7d32; }
+        .type-postprandial { background-color: #e3f2fd; color: #1565c0; }
+
+        .btn-delete { background: #fee2e2; border: none; color: #ef4444; width: 30px; height: 30px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .btn-delete:active { background: #fecaca; }
+        
+        .manage-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .small-btn { padding: 0.75rem; font-size: 0.85rem; border: 1.5px solid #e2e8f0; border-radius: 10px; background: white; cursor: pointer; font-weight: 600; color: #475569; transition: all 0.2s; }
+        
+        .report-table-wrapper { overflow-x: auto; width: 100%; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .report-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 300px; }
+        .report-table th, .report-table td { border-bottom: 1px solid #f1f5f9; padding: 12px 10px; text-align: center; }
+        .report-table th { background-color: #f8fafc; color: #64748b; font-weight: 700; }
+
+        @media print {
+            body { background-color: white; }
+            header, .card:not(.report-card), footer, .no-print { display: none !important; }
+            main { max-width: 100%; padding: 0; }
+            .card { box-shadow: none; border: 1px solid #eee; }
+            .report-card { display: block !important; width: 100%; }
+        }
+
+        footer { padding: 3rem 1rem; text-align: center; font-size: 0.8rem; color: #94a3b8; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🩸 혈당 관리 매니저 PRO</h1>
+    </header>
+
+    <main>
+        <!-- 상단 요약 대시보드 -->
+        <section class="card">
+            <h2>📊 최근 1달 요약</h2>
+            <div class="stats-container">
+                <div class="stats-column">
+                    <h3 class="stat-header fasting">공복</h3>
+                    <div class="stats-sub-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">평균</div>
+                            <div class="stat-value" id="fAvg">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">최고</div>
+                            <div class="stat-value" id="fMax">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">최저</div>
+                            <div class="stat-value" id="fMin">-</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-column">
+                    <h3 class="stat-header postprandial">식후</h3>
+                    <div class="stats-sub-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">평균</div>
+                            <div class="stat-value" id="pAvg">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">최고</div>
+                            <div class="stat-value" id="pMax">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">최저</div>
+                            <div class="stat-value" id="pMin">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 당화혈색소 예측치 -->
+            <div id="hba1cBox" style="margin-top: 15px; padding: 12px; background: #fff; border-radius: 10px; border: 1.5px dashed var(--secondary-color); text-align: center; display: block;">
+                <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">🩸 최근 3달 당화혈색소(HbA1c) 예상치: </span>
+                <span id="hba1cValue" style="font-size: 1.1rem; font-weight: 800; color: var(--secondary-color);">-</span>
+                <span style="font-size: 0.9rem; font-weight: 700; color: var(--secondary-color);">%</span>
+                <p style="font-size: 0.65rem; color: #94a3b8; margin: 4px 0 0;">* 최근 3달간 저장된 모든 데이터 평균 기준</p>
+            </div>
+        </section>
+
+        <!-- 기록 입력 섹션 -->
+        <section class="card">
+            <h2>기록하기</h2>
+            <form id="bloodSugarForm">
+                <div class="form-group">
+                    <label for="userName">사용자 이름</label>
+                    <input type="text" id="userName" value="james" placeholder="이름을 입력하세요" required>
+                </div>
+
+                <div class="form-group">
+                    <label>측정 종류</label>
+                    <div class="type-selector" id="typeSelector">
+                        <button type="button" class="type-btn active" data-type="fasting">공복</button>
+                        <button type="button" class="type-btn" data-type="postprandial">식후</button>
+                    </div>
+                </div>
+
+                <div class="flex-row">
+                    <div class="form-group flex-grow-1">
+                        <label for="date">날짜</label>
+                        <input type="date" id="date" required>
+                    </div>
+                    <div class="form-group" style="flex: 1.5;">
+                        <label for="time">시간</label>
+                        <div style="display: flex; gap: 6px;">
+                            <input type="time" id="time" required>
+                            <button type="button" onclick="setCurrentTime()" style="padding: 0 12px; background: #64748b; color: white; border: none; border-radius: 10px; font-size: 0.8rem; font-weight: 700; white-space: nowrap;">현재</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="level">혈당 수치 (mg/dL)</label>
+                    <input type="number" id="level" placeholder="수치를 입력하세요" min="10" max="600" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="memo">메모 (식단, 운동 등)</label>
+                    <textarea id="memo" rows="2" placeholder="예: 비빔밥 먹음, 30분 산책"></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn">저장하기</button>
+            </form>
+        </section>
+
+        <!-- 월간 보고서 섹션 -->
+        <section class="card report-card">
+            <h2>📑 월간 보고서</h2>
+            <div class="filter-section no-print">
+                <select id="reportUser" style="flex: 1;">
+                    <option value="all">전체 사용자</option>
+                </select>
+                <input type="month" id="reportMonth" style="flex: 1;">
+                <button class="small-btn" onclick="generateReport()" style="background: var(--secondary-color); color: white; border: none; padding: 0 15px;">생성</button>
+            </div>
+            
+            <div id="reportContent" style="display: none;">
+                <h3 id="reportTitle" style="text-align: center; margin: 1.5rem 0 1rem; font-size: 1.1rem;">보고서</h3>
+                <div class="chart-container" style="height: 280px; margin-bottom: 1.5rem;">
+                    <canvas id="monthChart"></canvas>
+                </div>
+                <div class="report-table-wrapper">
+                    <div id="reportTableContainer"></div>
+                </div>
+                <button class="submit-btn no-print" onclick="window.print()" style="background: #334155; margin-top: 20px;">📄 보고서 인쇄하기 (PDF)</button>
+            </div>
+            <div id="reportEmpty" class="empty-state" style="text-align: center; color: #94a3b8; padding: 2rem 0; font-size: 0.9rem;">사용자와 월을 선택하고 [생성]을 눌러주세요.</div>
+        </section>
+
+        <!-- 최근 추이 그래프 -->
+        <section class="card">
+            <h2>📈 최근 추이 (공복/식후 평균)</h2>
+            <div class="chart-container">
+                <canvas id="sugarChart"></canvas>
+            </div>
+        </section>
+
+        <!-- 히스토리 목록 -->
+        <section class="card">
+            <h2>지난 기록</h2>
+            <div class="filter-section">
+                <select id="filterUser" onchange="loadData()" style="flex: 1;">
+                    <option value="all">전체 사용자</option>
+                </select>
+                <select id="filterPeriod" onchange="loadData()" style="flex: 1;">
+                    <option value="all">전체 기간</option>
+                    <option value="7">최근 7일</option>
+                    <option value="30">최근 30일</option>
+                    <option value="date">특정 날짜 선택</option>
+                </select>
+            </div>
+            <div id="datePickerContainer" style="display: none; margin-bottom: 1rem;">
+                <input type="date" id="filterSpecificDate" onchange="loadData()">
+            </div>
+            <div id="historyList" class="history-list"></div>
+        </section>
+
+        <!-- 데이터 관리 -->
+        <section class="card">
+            <h2>데이터 관리</h2>
+            <div class="manage-btns">
+                <button class="small-btn" onclick="exportData()">💾 JSON 백업</button>
+                <button class="small-btn" onclick="exportCSV()">📊 엑셀 저장</button>
+                <button class="small-btn" onclick="document.getElementById('importFile').click()">📂 데이터 복구</button>
+            </div>
+            <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 당뇨 관리 PRO. 꾸준함이 정답입니다.</p>
+    </footer>
+
+    <script>
+        const API_URL = 'http://localhost:3000/sugarData';
+        let sugarChart = null;
+        let monthChart = null;
+        let selectedType = 'fasting';
+        let isFirstLoad = true;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await migrateToBackend();
+            const now = new Date();
+            document.getElementById('date').value = now.toISOString().split('T')[0];
+            document.getElementById('reportMonth').value = now.toISOString().slice(0, 7);
+            setCurrentTime();
+            setupTypeButtons();
+            await loadData();
+        });
+
+        async function migrateToBackend() {
+            const localData = JSON.parse(localStorage.getItem('sugarData') || '[]');
+            if (localData.length === 0) return;
+
+            try {
+                const response = await fetch(API_URL);
+                const backendData = await response.json();
+                
+                if (backendData.length === 0) {
+                    console.log('Migrating local data to backend...');
+                    for (const item of localData) {
+                        delete item.id;
+                        await fetch(API_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(item)
+                        });
+                    }
+                    console.log('Migration complete. Clearing localStorage.');
+                    localStorage.removeItem('sugarData');
+                }
+            } catch (error) {
+                console.error('Migration failed or backend unavailable:', error);
+            }
+        }
+
+        function setCurrentTime() {
+            const now = new Date();
+            document.getElementById('time').value = now.toTimeString().slice(0, 5);
+        }
+
+        function setupTypeButtons() {
+            const buttons = document.querySelectorAll('.type-btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    buttons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    selectedType = btn.dataset.type;
+                });
+            });
+        }
+
+        function getStatus(level, type) {
+            if (type === 'fasting') {
+                if (level < 100) return { label: '정상', class: 'bg-normal' };
+                if (level < 126) return { label: '주의', class: 'bg-caution' };
+                return { label: '위험', class: 'bg-danger' };
+            } else {
+                if (level < 140) return { label: '정상', class: 'bg-normal' };
+                if (level < 200) return { label: '주의', class: 'bg-caution' };
+                return { label: '위험', class: 'bg-danger' };
+            }
+        }
+
+        document.getElementById('bloodSugarForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newData = {
+                name: document.getElementById('userName').value.trim(),
+                date: document.getElementById('date').value,
+                time: document.getElementById('time').value,
+                type: selectedType,
+                level: parseInt(document.getElementById('level').value),
+                memo: document.getElementById('memo').value.trim()
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newData)
+                });
+                
+                if (response.ok) {
+                    document.getElementById('level').value = '';
+                    document.getElementById('memo').value = '';
+                    await loadData();
+                    alert('기록이 저장되었습니다.');
+                }
+            } catch (error) {
+                console.error('Save failed:', error);
+                alert('데이터 저장 중 오류가 발생했습니다. (백엔드 서버 확인 필요)');
+            }
+        });
+
+        async function loadData() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error('Network response was not ok');
+                let history = await response.json();
+                
+                history.sort((a, b) => new Date(`${b.date}T${b.time}`) - new Date(`${a.date}T${a.time}`));
+
+                const nameInput = document.getElementById('userName');
+                if (!nameInput.value) nameInput.value = "james";
+                updateFilterOptions(history);
+                
+                const userFilter = document.getElementById('filterUser').value;
+                let userHistory = userFilter === 'all' ? history : history.filter(d => d.name === userFilter);
+                
+                const oneMonthAgo = new Date();
+                oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
+                const recentMonthData = userHistory.filter(d => new Date(d.date) >= oneMonthAgo);
+                
+                const threeMonthsAgo = new Date();
+                threeMonthsAgo.setDate(threeMonthsAgo.getDate() - 90);
+                const recentThreeMonthsData = userHistory.filter(d => new Date(d.date) >= threeMonthsAgo);
+                
+                updateStats(recentMonthData, recentThreeMonthsData);
+                
+                const filteredData = filterData(history);
+                renderHistory(filteredData);
+                renderChart(filteredData);
+            } catch (error) {
+                console.error('Load failed:', error);
+            }
+        }
+
+        function updateFilterOptions(data) {
+            const userSelects = [document.getElementById('filterUser'), document.getElementById('reportUser')];
+            const users = [...new Set(data.map(d => d.name))];
+            userSelects.forEach((s) => {
+                const currentVal = s.value;
+                s.innerHTML = '<option value="all">전체 사용자</option>';
+                users.forEach(user => {
+                    const opt = document.createElement('option');
+                    opt.value = user; opt.textContent = user;
+                    s.appendChild(opt);
+                });
+                if (isFirstLoad && users.includes("james")) s.value = "james";
+                else s.value = users.includes(currentVal) || currentVal === 'all' ? currentVal : 'all';
+            });
+            if (data.length > 0) isFirstLoad = false;
+        }
+
+        function filterData(data) {
+            const userFilter = document.getElementById('filterUser').value;
+            const periodFilter = document.getElementById('filterPeriod').value;
+            const dateContainer = document.getElementById('datePickerContainer');
+            const specificDateInput = document.getElementById('filterSpecificDate');
+            
+            dateContainer.style.display = periodFilter === 'date' ? 'block' : 'none';
+            let filtered = userFilter === 'all' ? data : data.filter(d => d.name === userFilter);
+            
+            if (periodFilter === 'date') {
+                if (specificDateInput.value) filtered = filtered.filter(d => d.date === specificDateInput.value);
+            } else if (periodFilter !== 'all') {
+                const limitDate = new Date();
+                limitDate.setDate(limitDate.getDate() - parseInt(periodFilter));
+                filtered = filtered.filter(d => new Date(d.date) >= limitDate);
+            }
+            return filtered;
+        }
+
+        function updateStats(monthData, threeMonthData) {
+            const fasting = monthData.filter(d => d.type === 'fasting').map(d => d.level);
+            const post = monthData.filter(d => d.type === 'postprandial').map(d => d.level);
+            
+            const set = (lvls, pfx) => {
+                const el = (s) => document.getElementById(pfx + s);
+                if (!lvls.length) { el('Avg').innerText = '-'; el('Max').innerText = '-'; el('Min').innerText = '-'; return; }
+                el('Avg').innerText = Math.round(lvls.reduce((a, b) => a + b) / lvls.length);
+                el('Max').innerText = Math.max(...lvls);
+                el('Min').innerText = Math.min(...lvls);
+            };
+
+            set(fasting, 'f'); set(post, 'p');
+
+            const hba1cEl = document.getElementById('hba1cValue');
+            const allThreeMonthLevels = threeMonthData.map(d => d.level);
+            
+            if (allThreeMonthLevels.length > 0) {
+                const totalAvg = allThreeMonthLevels.reduce((a, b) => a + b) / allThreeMonthLevels.length;
+                const hba1c = (totalAvg + 46.7) / 28.7;
+                hba1cEl.innerText = hba1c.toFixed(1);
+            } else {
+                hba1cEl.innerText = '-';
+            }
+        }
+
+        async function generateReport() {
+            try {
+                const response = await fetch(API_URL);
+                const history = await response.json();
+                
+                const user = document.getElementById('reportUser').value;
+                const month = document.getElementById('reportMonth').value;
+                if (!month) return alert('월을 선택하세요.');
+                let filtered = history.filter(d => d.date.startsWith(month));
+                if (user !== 'all') filtered = filtered.filter(d => d.name === user);
+                const content = document.getElementById('reportContent');
+                const empty = document.getElementById('reportEmpty');
+                if (!filtered.length) { content.style.display = 'none'; empty.innerText = '데이터가 없습니다.'; empty.style.display = 'block'; return; }
+                content.style.display = 'block'; empty.style.display = 'none';
+                document.getElementById('reportTitle').innerText = `${month} 혈당 보고서 (${user === 'all' ? '전체' : user})`;
+                const daily = {};
+                filtered.forEach(d => { if (!daily[d.date]) daily[d.date] = { f: [], p: [] }; daily[d.date][d.type === 'fasting' ? 'f' : 'p'].push(d.level); });
+                const dates = Object.keys(daily).sort();
+                const fAvgs = dates.map(d => daily[d].f.length ? Math.round(daily[d].f.reduce((a,b)=>a+b)/daily[d].f.length) : null);
+                const pAvgs = dates.map(d => daily[d].p.length ? Math.round(daily[d].p.reduce((a,b)=>a+b)/daily[d].p.length) : null);
+                renderMonthChart(dates, fAvgs, pAvgs);
+                let html = `<table class="report-table"><thead><tr><th>날짜</th><th>공복(Avg)</th><th>식후(Avg)</th></tr></thead><tbody>`;
+                dates.forEach((d, i) => html += `<tr><td>${d.split('-')[2]}일</td><td>${fAvgs[i]||'-'}</td><td>${pAvgs[i]||'-'}</td></tr>`);
+                document.getElementById('reportTableContainer').innerHTML = html + '</tbody></table>';
+            } catch (error) {
+                console.error('Report generation failed:', error);
+            }
+        }
+
+        function renderMonthChart(labels, f, p) {
+            const ctx = document.getElementById('monthChart').getContext('2d');
+            if (monthChart) monthChart.destroy();
+            monthChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: labels.map(d => d.split('-')[2] + '일'), datasets: [
+                    { label: '공복', data: f, borderColor: '#2ecc71', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, tension: 0.1, spanGaps: true },
+                    { label: '식후', data: p, borderColor: '#3498db', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, tension: 0.1, spanGaps: true }
+                ]},
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } }
+            });
+        }
+
+        function renderHistory(data) {
+            const list = document.getElementById('historyList');
+            if (!data.length) { list.innerHTML = '<div style="text-align:center; padding:2rem; color:#94a3b8;">기록이 없습니다.</div>'; return; }
+            const grouped = data.reduce((acc, item) => { if (!acc[item.date]) acc[item.date] = []; acc[item.date].push(item); return acc; }, {});
+            const sorted = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+            let html = '';
+            sorted.forEach(date => {
+                const items = grouped[date];
+                const avg = Math.round(items.reduce((s, i) => s + i.level, 0) / items.length);
+                html += `<div class="date-header"><span>📅 ${date}</span><span>평균: ${avg}</span></div>`;
+                items.forEach(item => {
+                    const status = getStatus(item.level, item.type);
+                    html += `<div class="history-item"><div class="history-info">
+                        <div style="font-weight:700; font-size:0.95rem;"><span class="status-dot ${status.class}"></span>${item.name} <span style="font-weight:400; color:#94a3b8; font-size:0.8rem;">${item.time}</span></div>
+                        <div class="type-tag ${item.type === 'fasting' ? 'type-fasting' : 'type-postprandial'}">${item.type === 'fasting' ? '공복' : '식후'}</div>
+                        ${item.memo ? `<div class="memo-text">${item.memo}</div>` : ''}</div>
+                        <div style="display:flex; align-items:center; gap:12px;"><div class="level-badge ${status.class}">${item.level}</div>
+                        <button class="btn-delete" onclick="deleteRecord(${item.id})">×</button></div></div>`;
+                });
+            });
+            list.innerHTML = html;
+        }
+
+        function renderChart(data) {
+            const ctx = document.getElementById('sugarChart').getContext('2d');
+            const daily = {};
+            data.forEach(item => { if (!daily[item.date]) daily[item.date] = { f: [], p: [] }; daily[item.date][item.type === 'fasting' ? 'f' : 'p'].push(item.level); });
+            const dates = Object.keys(daily).sort().slice(-10);
+            const f = dates.map(d => daily[d].f.length ? Math.round(daily[d].f.reduce((a,b)=>a+b)/daily[d].f.length) : null);
+            const p = dates.map(d => daily[d].p.length ? Math.round(daily[d].p.reduce((a,b)=>a+b)/daily[d].p.length) : null);
+            if (sugarChart) sugarChart.destroy();
+            if (!dates.length) return;
+            sugarChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: dates.map(d => d.slice(5)), datasets: [
+                    { label: '공복', data: f, borderColor: '#2ecc71', backgroundColor: 'transparent', borderWidth: 3, pointRadius: 4, tension: 0.3, spanGaps: true },
+                    { label: '식후', data: p, borderColor: '#3498db', backgroundColor: 'transparent', borderWidth: 3, pointRadius: 4, tension: 0.3, spanGaps: true }
+                ]},
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { suggestedMin: 70, suggestedMax: 180 }, x: { ticks: { font: { size: 10 } } } }, plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { size: 10 } } } } }
+            });
+        }
+
+        async function exportCSV() {
+            try {
+                const response = await fetch(API_URL);
+                const history = await response.json();
+                if (!history.length) return alert('데이터가 없습니다.');
+                let csv = '\uFEFF이름,날짜,시간,구분,혈당(mg/dL),상태,메모\n';
+                history.forEach(d => csv += `${d.name},${d.date},${d.time},${d.type === 'fasting' ? '공복' : '식후'},${d.level},${getStatus(d.level, d.type).label},"${d.memo || ''}"\n`);
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `blood_sugar_${new Date().toISOString().split('T')[0]}.csv`; link.click();
+            } catch (error) {
+                console.error('Export CSV failed:', error);
+            }
+        }
+
+        async function exportData() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+                const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `backup_${new Date().toISOString().split('T')[0]}.json`; link.click();
+            } catch (error) {
+                console.error('Export JSON failed:', error);
+            }
+        }
+
+        async function importData(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = async (e) => { 
+                try { 
+                    const data = JSON.parse(e.target.result);
+                    for (const item of data) {
+                        delete item.id;
+                        await fetch(API_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(item)
+                        });
+                    }
+                    await loadData(); 
+                    alert('복구 완료!'); 
+                } catch(err) { 
+                    alert('파일 오류'); 
+                } 
+            };
+            reader.readAsText(file);
+        }
+
+        window.deleteRecord = async function(id) { 
+            if (confirm('삭제하시겠습니까?')) { 
+                try {
+                    const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        await loadData(); 
+                    }
+                } catch (error) {
+                    console.error('Delete failed:', error);
+                }
+            } 
+        };
+    </script>
+</body>
+</html>

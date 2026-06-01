@@ -1,0 +1,12 @@
+{
+  "name": "diabetes-manager-pro",
+  "version": "1.0.0",
+  "description": "Diabetes Blood Sugar Management Manager PRO",
+  "main": "index.html",
+  "scripts": {
+    "start": "json-server --watch db.json --port 3000"
+  },
+  "dependencies": {
+    "json-server": "^0.17.4"
+  }
+}
