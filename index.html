@@ -420,17 +420,26 @@
     <script>
         const API_URL = window.location.origin.includes('localhost') ? 'http://localhost:3000/sugarData' : '/sugarData';
         
-        // 기기 고유 ID 생성 및 관리 (모바일 접속 시 고유 키 역할)
-        function getDeviceId() {
+        // 기기 고유 ID 및 사용자 이름 관리
+        function initApp() {
             let deviceId = localStorage.getItem('sugarApp_deviceId');
+            let userName = localStorage.getItem('sugarApp_userName');
+
             if (!deviceId) {
-                // 랜덤한 고유 키 생성
                 deviceId = 'dev_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
                 localStorage.setItem('sugarApp_deviceId', deviceId);
             }
-            return deviceId;
+
+            if (!userName) {
+                userName = prompt('환영합니다! 사용하실 이름을 입력해주세요:', '홍길동');
+                if (!userName || userName.trim() === '') userName = '사용자';
+                localStorage.setItem('sugarApp_userName', userName.trim());
+            }
+
+            return { deviceId, userName };
         }
-        const DEVICE_ID = getDeviceId();
+
+        const { deviceId: DEVICE_ID, userName: USER_NAME } = initApp();
 
         let sugarChart = null;
         let monthChart = null;
@@ -438,6 +447,10 @@
         let isFirstLoad = true;
 
         document.addEventListener('DOMContentLoaded', async () => {
+            // 사용자 이름 입력 필드 초기화
+            const nameInput = document.getElementById('userName');
+            if (nameInput) nameInput.value = USER_NAME;
+
             await migrateToBackend();
             const now = new Date();
             document.getElementById('date').value = now.toISOString().split('T')[0];
@@ -544,7 +557,7 @@
                 history.sort((a, b) => new Date(`${b.date}T${b.time}`) - new Date(`${a.date}T${a.time}`));
 
                 const nameInput = document.getElementById('userName');
-                if (!nameInput.value) nameInput.value = "james";
+                if (!nameInput.value) nameInput.value = USER_NAME;
                 updateFilterOptions(history);
                 
                 const userFilter = document.getElementById('filterUser').value;
@@ -579,7 +592,7 @@
                     opt.value = user; opt.textContent = user;
                     s.appendChild(opt);
                 });
-                if (isFirstLoad && users.includes("james")) s.value = "james";
+                if (isFirstLoad && users.includes(USER_NAME)) s.value = USER_NAME;
                 else s.value = users.includes(currentVal) || currentVal === 'all' ? currentVal : 'all';
             });
             if (data.length > 0) isFirstLoad = false;
