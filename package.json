@@ -1,11 +1,19 @@
 {
   "name": "diabetes-manager-pro",
   "version": "1.0.0",
-  "description": "Diabetes Blood Sugar Management Manager PRO",
+  "description": "Diabetes Blood Sugar Management Manager PRO with MongoDB",
+  "main": "server.js",
   "scripts": {
-    "start": "json-server --watch db.json --port $PORT --host 0.0.0.0 --static ."
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "dependencies": {
-    "json-server": "^0.17.4"
+    "express": "^4.18.2",
+    "mongoose": "^8.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   }
 }
