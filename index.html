@@ -605,7 +605,7 @@
         document.getElementById('bloodSugarForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const newData = {
-                deviceId: DEVICE_ID, // 저장 시 내 기기 고유 키 포함
+                deviceId: DEVICE_ID,
                 name: document.getElementById('userName').value.trim(),
                 date: document.getElementById('date').value,
                 time: document.getElementById('time').value,
@@ -615,31 +615,58 @@
             };
 
             try {
+                // 1. 서버 저장 시도
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newData)
                 });
                 
+                // 2. 로컬 스토리지에 무조건 백업 저장 (서버 초기화 대비)
+                const localBackup = JSON.parse(localStorage.getItem('sugarApp_backup') || '[]');
+                // 중복 체크 로직 (날짜, 시간, 수치, 타입이 같으면 동일 데이터로 간주)
+                const isDuplicate = localBackup.some(d => d.date === newData.date && d.time === newData.time && d.level === newData.level && d.type === newData.type);
+                if (!isDuplicate) {
+                    localBackup.push(newData);
+                    localStorage.setItem('sugarApp_backup', JSON.stringify(localBackup));
+                }
+
                 if (response.ok) {
                     document.getElementById('level').value = '';
                     document.getElementById('memo').value = '';
                     await loadData();
-                    alert('기록이 저장되었습니다.');
+                    alert('기록이 저장되었습니다. (브라우저에도 안전하게 백업됨)');
                 }
             } catch (error) {
                 console.error('Save failed:', error);
-                alert('데이터 저장 중 오류가 발생했습니다.');
+                alert('데이터 저장 중 오류가 발생했습니다. 브라우저 로컬 저장소 확인이 필요합니다.');
             }
         });
 
         async function loadData() {
             try {
-                // API 호출 시 내 기기 ID로 필터링해서 가져옴
                 const response = await fetch(`${API_URL}?deviceId=${DEVICE_ID}`);
                 if (!response.ok) throw new Error('Network response was not ok');
                 let history = await response.json();
                 
+                // 서버가 비어있을 경우 로컬 백업에서 복구 시도
+                if (history.length === 0) {
+                    const localBackup = JSON.parse(localStorage.getItem('sugarApp_backup') || '[]');
+                    if (localBackup.length > 0) {
+                        console.log('Server empty. Syncing from local backup...');
+                        for (const item of localBackup) {
+                            await fetch(API_URL, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(item)
+                            });
+                        }
+                        // 다시 로드
+                        const retryResponse = await fetch(`${API_URL}?deviceId=${DEVICE_ID}`);
+                        history = await retryResponse.json();
+                    }
+                }
+
                 history.sort((a, b) => new Date(`${b.date}T${b.time}`) - new Date(`${a.date}T${a.time}`));
 
                 const nameInput = document.getElementById('userName');
