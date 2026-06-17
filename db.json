@@ -1,3 +1,14 @@
 {
-  "sugarData": []
+  "sugarData": [
+    {
+      "deviceId": "dev_zxcv1234",
+      "name": "james",
+      "date": "2026-06-01",
+      "time": "07:30",
+      "type": "fasting",
+      "level": 95,
+      "memo": "컨디션 좋음",
+      "id": 1
+    }
+  ]
 }
