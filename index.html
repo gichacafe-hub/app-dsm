@@ -695,21 +695,38 @@
                 medication: document.getElementById('medication').checked,
                 insulin: document.getElementById('insulin').checked
             };
+
+            // 1. 로컬 백업 우선 저장
+            saveLocalBackup(newData);
+
             try {
+                // 2. 서버 저장 시도
                 const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newData) });
                 if (response.ok) {
-                    if (document.getElementById('setAlarm').checked) alert('2시간 후 알람이 설정되었습니다. (데모)');
                     document.getElementById('level').value = ''; document.getElementById('memo').value = '';
                     document.getElementById('medication').checked = false; document.getElementById('insulin').checked = false;
-                    await loadData(); alert('저장되었습니다.');
+                    await loadData(); alert('안전하게 저장되었습니다. (서버+로컬)');
                 }
-            } catch (e) { alert('저장 실패'); }
+            } catch (e) { 
+                console.warn('Server save failed, but data is kept locally:', e);
+                alert('네트워크 오류로 서버 저장에 실패했지만, 핸드폰에 안전하게 임시 저장되었습니다. 연결 시 자동 동기화됩니다.');
+                await loadData(); 
+            }
         });
 
         async function loadData() {
             try {
+                // 앱 시작 시 자동 동기화 시도
+                await syncData();
+
                 const response = await fetch(`${API_URL}?deviceId=${DEVICE_ID}`);
                 let history = await response.json();
+                
+                // 서버에 데이터가 없으면 로컬 데이터라도 보여줌
+                if (history.length === 0) {
+                    history = JSON.parse(localStorage.getItem('sugarApp_local_backup') || '[]');
+                }
+
                 history.sort((a, b) => new Date(`${b.date}T${b.time}`) - new Date(`${a.date}T${a.time}`));
                 updateFilterOptions(history);
                 const userFilter = document.getElementById('filterUser').value;
@@ -723,7 +740,52 @@
                 const filtered = filterData(history);
                 renderHistory(filtered); renderChart(filtered);
                 analyzeInsights(userHistory);
-            } catch (e) {}
+            } catch (e) {
+                console.error('Load failed, showing local data:', e);
+                const history = JSON.parse(localStorage.getItem('sugarApp_local_backup') || '[]');
+                renderHistory(filterData(history));
+            }
+        }
+
+        function saveLocalBackup(data) {
+            const backup = JSON.parse(localStorage.getItem('sugarApp_local_backup') || '[]');
+            // 동일한 데이터(시간/수치/타입) 중복 체크
+            const isDuplicate = backup.some(d => d.date === data.date && d.time === data.time && d.level === data.level && d.type === data.type);
+            if (!isDuplicate) {
+                backup.push(data);
+                localStorage.setItem('sugarApp_local_backup', JSON.stringify(backup));
+            }
+        }
+
+        async function syncData() {
+            const localData = JSON.parse(localStorage.getItem('sugarApp_local_backup') || '[]');
+            if (localData.length === 0) return;
+
+            try {
+                const response = await fetch(`${API_URL}?deviceId=${DEVICE_ID}`);
+                const serverData = await response.json();
+                
+                // 서버에 없는 데이터만 골라내기
+                const toUpload = localData.filter(local => 
+                    !serverData.some(server => 
+                        server.date === local.date && server.time === local.time && server.level === local.level && server.type === local.type
+                    )
+                );
+
+                if (toUpload.length > 0) {
+                    console.log(`Syncing ${toUpload.length} items to server...`);
+                    for (const item of toUpload) {
+                        const { id, ...cleanItem } = item; // id가 있다면 제외
+                        await fetch(API_URL, { 
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'application/json' }, 
+                            body: JSON.stringify(cleanItem) 
+                        });
+                    }
+                }
+            } catch (e) {
+                console.warn('Sync failed (offline?):', e);
+            }
         }
 
         function updateFilterOptions(data) {
