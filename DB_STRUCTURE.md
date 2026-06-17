@@ -19,6 +19,8 @@
 | `time` | String | 측정 시간 (HH:mm) | `08:30` |
 | `type` | String | 측정 종류 (`fasting`, `postprandial`) | `fasting` |
 | `level` | Number | 혈당 수치 (mg/dL) | `120` |
+| `medication` | Boolean | 약 복용 여부 | `true` |
+| `insulin` | Boolean | 인슐린 투여 여부 | `false` |
 | `memo` | String | 추가 메모 (식단 등) | `아침 식전 공복` |
 
 ## 3. 예시 데이터 (`db.json`)

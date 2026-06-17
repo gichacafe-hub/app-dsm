@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>당뇨 혈당 관리 매니저 PRO</title>
+    <meta name="theme-color" content="#27ae60">
+    <link rel="manifest" href="manifest.json">
+    <title>당뇨 혈당 관리 매니저 PRO 2.0</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -20,7 +22,6 @@
             --shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
 
-        /* 다크 모드 스타일 (수동 전환용) */
         [data-theme='dark'] {
             --bg-color: #121212;
             --card-bg: #1e1e1e;
@@ -41,15 +42,15 @@
         }
         
         [data-theme='dark'] .type-btn { background: #262626; color: #94a3b8; border-color: #3f3f46; }
-        [data-theme='dark'] .small-btn { background: #262626; color: #e2e8f0; border-color: #3f3f46; }
+        [data-theme='dark'] .small-btn, [data-theme='dark'] .quick-btn { background: #262626; color: #e2e8f0; border-color: #3f3f46; }
         [data-theme='dark'] .date-header { background-color: #262626; border-color: #3f3f46; color: var(--secondary-color); }
         [data-theme='dark'] .history-item { border-bottom-color: #2d2d2d; }
         [data-theme='dark'] .memo-text { background: #2d2d2d; border-left-color: #4b5563; color: #cbd5e1; }
         [data-theme='dark'] .report-table th { background-color: #262626; color: #94a3b8; }
         [data-theme='dark'] .report-table td { border-bottom-color: #2d2d2d; color: #cbd5e1; }
         [data-theme='dark'] #hba1cBox { background: #262626 !important; }
+        [data-theme='dark'] .insight-card { background: #262626; border-color: #3f3f46; }
 
-        /* 테마 스위치 스타일 */
         .theme-switch-wrapper {
             position: absolute;
             right: 1rem;
@@ -81,6 +82,7 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            font-size: 16px;
         }
 
         header {
@@ -117,7 +119,7 @@
         }
 
         h2 {
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             margin-top: 0;
             margin-bottom: 1.2rem;
             color: var(--text-color);
@@ -126,6 +128,42 @@
             justify-content: space-between;
             align-items: center;
         }
+
+        .gauge-container {
+            width: 100%;
+            height: 20px;
+            background: #eee;
+            border-radius: 10px;
+            margin: 15px 0 5px;
+            overflow: hidden;
+            position: relative;
+        }
+        .gauge-bar {
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease-in-out, background-color 0.5s;
+        }
+        .gauge-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-bottom: 15px;
+        }
+
+        .trend-indicator {
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-left: 8px;
+        }
+        .trend-up { color: var(--status-danger); background: #fee2e2; }
+        .trend-down { color: var(--secondary-color); background: #e3f2fd; }
+        .trend-stable { color: var(--status-normal); background: #e8f5e9; }
 
         .stats-container {
             display: flex;
@@ -147,7 +185,7 @@
         }
 
         .stat-header {
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             padding: 8px;
             text-align: center;
             margin: 0;
@@ -165,11 +203,30 @@
         }
 
         .stat-item { text-align: center; }
-        .stat-label { font-size: 0.65rem; color: #8e9aaf; margin-bottom: 4px; }
-        .stat-value { font-size: 1rem; font-weight: 700; color: var(--text-color); }
+        .stat-label { font-size: 0.75rem; color: #8e9aaf; margin-bottom: 4px; }
+        .stat-value { font-size: 1.1rem; font-weight: 700; color: var(--text-color); }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 8px;
+            margin-bottom: 1.5rem;
+        }
+        .quick-btn {
+            padding: 10px 5px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #fff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .quick-btn:active { background: var(--primary-color); color: white; transform: scale(0.95); }
 
         .form-group { margin-bottom: 1.2rem; }
-        label { display: block; margin-bottom: 0.6rem; font-weight: 600; font-size: 0.85rem; color: #5a6a85; }
+        label { display: block; margin-bottom: 0.6rem; font-weight: 600; font-size: 0.9rem; color: #5a6a85; }
 
         input[type="date"], input[type="month"], input[type="time"], input[type="number"], input[type="text"], textarea, select {
             width: 100%;
@@ -190,8 +247,19 @@
             box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
         }
 
-        .flex-row { display: flex; gap: 12px; }
+        .flex-row { display: flex; gap: 12px; align-items: flex-end; }
         .flex-grow-1 { flex: 1; }
+
+        .time-adjust-btns { display: flex; gap: 4px; margin-top: 6px; }
+        .adjust-btn {
+            padding: 4px 8px;
+            font-size: 0.7rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #fff;
+            color: #64748b;
+            cursor: pointer;
+        }
 
         .type-selector { display: flex; gap: 10px; }
         .type-btn {
@@ -206,6 +274,15 @@
             color: #64748b;
         }
         .type-btn.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
+
+        .insight-card {
+            background: #f8fafc;
+            border-left: 4px solid var(--secondary-color);
+            padding: 1rem;
+            margin-bottom: 1.25rem;
+            border-radius: 0 12px 12px 0;
+        }
+        .insight-text { font-size: 0.9rem; line-height: 1.5; color: #475569; }
 
         button.submit-btn {
             width: 100%;
@@ -229,7 +306,7 @@
         
         @media (max-width: 480px) {
             .filter-section { flex-wrap: wrap; }
-            .filter-section select { flex: 1; min-width: 45%; }
+            .filter-section select, .filter-section input { flex: 1; min-width: 45%; }
         }
 
         .history-item {
@@ -244,7 +321,7 @@
             background-color: #f8fafc;
             padding: 10px 14px;
             border-radius: 10px;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 700;
             color: var(--secondary-color);
             margin-top: 1.8rem;
@@ -256,17 +333,18 @@
         
         .date-header:first-child { margin-top: 0; }
         .history-info { flex: 1; padding-right: 10px; }
-        .memo-text { font-size: 0.8rem; color: #64748b; margin-top: 6px; padding: 6px 10px; background: #f1f5f9; border-radius: 6px; border-left: 3px solid #cbd5e1; }
+        .memo-text { font-size: 0.85rem; color: #64748b; margin-top: 6px; padding: 6px 10px; background: #f1f5f9; border-radius: 6px; border-left: 3px solid #cbd5e1; }
+        .med-tag { display: inline-block; background: #fef3c7; color: #92400e; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; margin-right: 4px; font-weight: 700; }
 
         .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
 
         .level-badge {
-            padding: 6px 14px;
+            padding: 8px 16px;
             border-radius: 20px;
             font-weight: 800;
             color: white;
-            font-size: 1rem;
-            min-width: 45px;
+            font-size: 1.1rem;
+            min-width: 50px;
             text-align: center;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
@@ -275,7 +353,7 @@
         .bg-caution { background-color: var(--status-caution); }
         .bg-danger { background-color: var(--status-danger); }
 
-        .type-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; margin-top: 6px; }
+        .type-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 700; margin-top: 6px; }
         .type-fasting { background-color: #e8f5e9; color: #2e7d32; }
         .type-postprandial { background-color: #e3f2fd; color: #1565c0; }
 
@@ -283,10 +361,10 @@
         .btn-delete:active { background: #fecaca; }
         
         .manage-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .small-btn { padding: 0.75rem; font-size: 0.85rem; border: 1.5px solid #e2e8f0; border-radius: 10px; background: white; cursor: pointer; font-weight: 600; color: #475569; transition: all 0.2s; }
+        .small-btn { padding: 0.75rem; font-size: 0.9rem; border: 1.5px solid #e2e8f0; border-radius: 10px; background: white; cursor: pointer; font-weight: 600; color: #475569; transition: all 0.2s; }
         
         .report-table-wrapper { overflow-x: auto; width: 100%; border-radius: 12px; border: 1px solid #e2e8f0; }
-        .report-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 300px; }
+        .report-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 300px; }
         .report-table th, .report-table td { border-bottom: 1px solid #f1f5f9; padding: 12px 10px; text-align: center; }
         .report-table th { background-color: #f8fafc; color: #64748b; font-weight: 700; }
 
@@ -298,7 +376,7 @@
             .report-card { display: block !important; width: 100%; }
         }
 
-        footer { padding: 3rem 1rem; text-align: center; font-size: 0.8rem; color: #94a3b8; }
+        footer { padding: 3rem 1rem; text-align: center; font-size: 0.85rem; color: #94a3b8; }
     </style>
 </head>
 <body>
@@ -306,13 +384,27 @@
         <div class="theme-switch-wrapper no-print">
             <button id="themeToggle" class="theme-switch-btn" onclick="toggleTheme()">🌙 다크 모드</button>
         </div>
-        <h1>🩸 혈당 관리 매니저 PRO</h1>
+        <h1>🩸 혈당 관리 매니저 PRO 2.0</h1>
     </header>
 
     <main>
-        <!-- 상단 요약 대시보드 -->
+        <section id="insightSection" class="insight-card no-print" style="display: none;">
+            <div class="insight-text" id="insightContent">데이터를 분석 중입니다...</div>
+        </section>
+
         <section class="card">
-            <h2>📊 최근 1달 요약</h2>
+            <h2>📊 최근 1달 요약 <span id="trendIndicator"></span></h2>
+            
+            <div class="gauge-container">
+                <div id="sugarGauge" class="gauge-bar bg-normal"></div>
+            </div>
+            <div class="gauge-labels">
+                <span>저혈당(70)</span>
+                <span>정상(100)</span>
+                <span>주의(126)</span>
+                <span>위험(200+)</span>
+            </div>
+
             <div class="stats-container">
                 <div class="stats-column">
                     <h3 class="stat-header fasting">공복</h3>
@@ -349,22 +441,32 @@
                     </div>
                 </div>
             </div>
-            <!-- 당화혈색소 예측치 -->
             <div id="hba1cBox" style="margin-top: 15px; padding: 12px; background: #fff; border-radius: 10px; border: 1.5px dashed var(--secondary-color); text-align: center; display: block;">
-                <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">🩸 최근 3달 당화혈색소(HbA1c) 예상치: </span>
-                <span id="hba1cValue" style="font-size: 1.1rem; font-weight: 800; color: var(--secondary-color);">-</span>
-                <span style="font-size: 0.9rem; font-weight: 700; color: var(--secondary-color);">%</span>
-                <p style="font-size: 0.65rem; color: #94a3b8; margin: 4px 0 0;">* 최근 3달간 저장된 모든 데이터 평균 기준</p>
+                <span style="font-size: 0.9rem; color: #64748b; font-weight: 600;">🩸 최근 3달 당화혈색소(HbA1c) 예상치: </span>
+                <span id="hba1cValue" style="font-size: 1.2rem; font-weight: 800; color: var(--secondary-color);">-</span>
+                <span style="font-size: 1rem; font-weight: 700; color: var(--secondary-color);">%</span>
+                <div style="font-size: 0.7rem; color: #94a3b8; margin: 4px 0 0;">
+                    목표치: <span id="targetHbA1c">6.5</span>% 
+                    <button onclick="setTargetHbA1c()" class="adjust-btn" style="padding: 2px 4px;">설정</button>
+                </div>
             </div>
         </section>
 
-        <!-- 기록 입력 섹션 -->
         <section class="card">
             <h2>기록하기</h2>
+            
+            <div class="quick-actions no-print">
+                <button type="button" class="quick-btn" onclick="quickFill('fasting', '기상 후')">☀️ 기상 후</button>
+                <button type="button" class="quick-btn" onclick="quickFill('postprandial', '아침 식후')">🍞 조식 후</button>
+                <button type="button" class="quick-btn" onclick="quickFill('postprandial', '점심 식후')">🍚 중식 후</button>
+                <button type="button" class="quick-btn" onclick="quickFill('postprandial', '저녁 식후')">🍖 석식 후</button>
+                <button type="button" class="quick-btn" onclick="quickFill('fasting', '취침 전')">🌙 취침 전</button>
+            </div>
+
             <form id="bloodSugarForm">
                 <div class="form-group">
                     <label for="userName">사용자 이름</label>
-                    <input type="text" id="userName" value="james" placeholder="이름을 입력하세요" required>
+                    <input type="text" id="userName" placeholder="이름을 입력하세요" required>
                 </div>
 
                 <div class="form-group">
@@ -382,16 +484,36 @@
                     </div>
                     <div class="form-group" style="flex: 1.5;">
                         <label for="time">시간</label>
-                        <div style="display: flex; gap: 6px;">
-                            <input type="time" id="time" required>
-                            <button type="button" onclick="setCurrentTime()" style="padding: 0 12px; background: #64748b; color: white; border: none; border-radius: 10px; font-size: 0.8rem; font-weight: 700; white-space: nowrap;">현재</button>
+                        <div>
+                            <div style="display: flex; gap: 6px;">
+                                <input type="time" id="time" required>
+                                <button type="button" onclick="setCurrentTime()" style="padding: 0 12px; background: #64748b; color: white; border: none; border-radius: 10px; font-size: 0.8rem; font-weight: 700; white-space: nowrap;">현재</button>
+                            </div>
+                            <div class="time-adjust-btns">
+                                <button type="button" class="adjust-btn" onclick="adjustTime(-5)">-5분</button>
+                                <button type="button" class="adjust-btn" onclick="adjustTime(-10)">-10분</button>
+                                <button type="button" class="adjust-btn" onclick="adjustTime(-30)">-30분</button>
+                                <button type="button" class="adjust-btn" onclick="adjustTime(-60)">-1시간</button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="level">혈당 수치 (mg/dL)</label>
-                    <input type="number" id="level" placeholder="수치를 입력하세요" min="10" max="600" required>
+                    <input type="number" id="level" placeholder="수치를 입력하세요" min="10" max="600" inputmode="decimal" required>
+                </div>
+
+                <div class="form-group" style="display: flex; gap: 15px; background: #f8fafc; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                    <label style="display: flex; align-items: center; gap: 8px; margin: 0; cursor: pointer;">
+                        <input type="checkbox" id="medication" style="width: 18px; height: 18px;"> 💊 약 복용
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; margin: 0; cursor: pointer;">
+                        <input type="checkbox" id="insulin" style="width: 18px; height: 18px;"> 💉 인슐린
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; margin: 0; cursor: pointer; color: var(--secondary-color); font-weight: 700;">
+                        <input type="checkbox" id="setAlarm" style="width: 18px; height: 18px;"> ⏰ 2시간 알람
+                    </label>
                 </div>
 
                 <div class="form-group">
@@ -403,7 +525,6 @@
             </form>
         </section>
 
-        <!-- 월간 보고서 섹션 -->
         <section class="card report-card">
             <h2>📑 월간 보고서</h2>
             <div class="filter-section no-print">
@@ -427,7 +548,6 @@
             <div id="reportEmpty" class="empty-state" style="text-align: center; color: #94a3b8; padding: 2rem 0; font-size: 0.9rem;">사용자와 월을 선택하고 [생성]을 눌러주세요.</div>
         </section>
 
-        <!-- 최근 추이 그래프 -->
         <section class="card">
             <h2>📈 최근 추이 (공복/식후 평균)</h2>
             <div class="chart-container">
@@ -435,7 +555,6 @@
             </div>
         </section>
 
-        <!-- 히스토리 목록 -->
         <section class="card">
             <h2>지난 기록</h2>
             <div class="filter-section">
@@ -448,6 +567,7 @@
                     <option value="30">최근 30일</option>
                     <option value="date">특정 날짜 선택</option>
                 </select>
+                <input type="text" id="searchMemo" placeholder="메모 검색..." oninput="loadData()" style="flex: 1;">
             </div>
             <div id="datePickerContainer" style="display: none; margin-bottom: 1rem;">
                 <input type="date" id="filterSpecificDate" onchange="loadData()">
@@ -455,7 +575,6 @@
             <div id="historyList" class="history-list"></div>
         </section>
 
-        <!-- 데이터 관리 -->
         <section class="card">
             <h2>데이터 관리</h2>
             <div class="manage-btns">
@@ -468,13 +587,12 @@
     </main>
 
     <footer>
-        <p>&copy; 2026 당뇨 관리 PRO. 꾸준함이 정답입니다.</p>
+        <p>&copy; 2026 당뇨 관리 PRO 2.0. 꾸준함이 정답입니다.</p>
     </footer>
 
     <script>
         const API_URL = window.location.origin.includes('localhost') ? 'http://localhost:3000/sugarData' : '/sugarData';
         
-        // 테마 관리 기능
         function initTheme() {
             const savedTheme = localStorage.getItem('sugarApp_theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
@@ -491,101 +609,66 @@
 
         function updateThemeButton(theme) {
             const btn = document.getElementById('themeToggle');
-            if (btn) {
-                btn.innerText = theme === 'light' ? '🌙 다크 모드' : '☀️ 라이트 모드';
-            }
+            if (btn) btn.innerText = theme === 'light' ? '🌙 다크 모드' : '☀️ 라이트 모드';
         }
 
-        // 기기 고유 ID 및 사용자 이름 관리
         function initApp() {
             let deviceId = localStorage.getItem('sugarApp_deviceId');
             let userName = localStorage.getItem('sugarApp_userName');
-
             if (!deviceId) {
                 deviceId = 'dev_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
                 localStorage.setItem('sugarApp_deviceId', deviceId);
             }
-
             if (!userName) {
-                userName = prompt('환영합니다! 사용하실 이름을 입력해주세요:', '홍길동');
-                if (!userName || userName.trim() === '') userName = '사용자';
+                userName = prompt('환영합니다! 사용하실 이름을 입력해주세요:', '홍길동') || '사용자';
                 localStorage.setItem('sugarApp_userName', userName.trim());
             }
-
-            return { deviceId, userName };
+            const target = localStorage.getItem('sugarApp_targetHbA1c') || '6.5';
+            document.getElementById('targetHbA1c').innerText = target;
+            return { deviceId, userName: userName.trim() };
         }
 
         const { deviceId: DEVICE_ID, userName: USER_NAME } = initApp();
-
-        let sugarChart = null;
-        let monthChart = null;
-        let selectedType = 'fasting';
-        let isFirstLoad = true;
+        let sugarChart = null, monthChart = null, selectedType = 'fasting', isFirstLoad = true;
 
         document.addEventListener('DOMContentLoaded', async () => {
             initTheme();
-            // 사용자 이름 입력 필드 초기화
-            const nameInput = document.getElementById('userName');
-            if (nameInput) nameInput.value = USER_NAME;
-
+            document.getElementById('userName').value = USER_NAME;
             await migrateToBackend();
-            
-            // 날짜 기본값 설정 (로컬 시간 기준)
             const now = new Date();
             const offset = now.getTimezoneOffset() * 60000;
-            const localISOTime = new Date(now - offset).toISOString();
-            const today = localISOTime.split('T')[0];
-            const currentMonth = today.slice(0, 7);
-
+            const today = new Date(now - offset).toISOString().split('T')[0];
             document.getElementById('date').value = today;
-            document.getElementById('reportMonth').value = currentMonth;
-            document.getElementById('filterSpecificDate').value = today; // 히스토리 날짜 필터 기본값
-            
+            document.getElementById('reportMonth').value = today.slice(0, 7);
+            document.getElementById('filterSpecificDate').value = today;
             setCurrentTime();
             setupTypeButtons();
             await loadData();
+            if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
         });
 
         async function migrateToBackend() {
             const localData = JSON.parse(localStorage.getItem('sugarData') || '[]');
             if (localData.length === 0) return;
-
             try {
-                // 내 기기 데이터가 서버에 있는지 확인
                 const response = await fetch(`${API_URL}?deviceId=${DEVICE_ID}`);
-                const backendData = await response.json();
-                
-                if (backendData.length === 0) {
-                    console.log('Migrating local data to backend with Device ID...');
+                if ((await response.json()).length === 0) {
                     for (const item of localData) {
-                        delete item.id;
-                        item.deviceId = DEVICE_ID; // 내 기기 ID 부여
-                        await fetch(API_URL, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(item)
-                        });
+                        delete item.id; item.deviceId = DEVICE_ID;
+                        await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(item) });
                     }
-                    console.log('Migration complete. Clearing localStorage.');
                     localStorage.removeItem('sugarData');
                 }
-            } catch (error) {
-                console.error('Migration failed:', error);
-            }
+            } catch (e) {}
         }
 
-        function setCurrentTime() {
-            const now = new Date();
-            document.getElementById('time').value = now.toTimeString().slice(0, 5);
-        }
+        function setCurrentTime() { document.getElementById('time').value = new Date().toTimeString().slice(0, 5); }
 
         function setupTypeButtons() {
-            const buttons = document.querySelectorAll('.type-btn');
-            buttons.forEach(btn => {
+            document.querySelectorAll('.type-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    buttons.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    selectedType = btn.dataset.type;
+                    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active'); selectedType = btn.dataset.type;
                 });
             });
         }
@@ -605,218 +688,112 @@
         document.getElementById('bloodSugarForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const newData = {
-                deviceId: DEVICE_ID,
-                name: document.getElementById('userName').value.trim(),
-                date: document.getElementById('date').value,
-                time: document.getElementById('time').value,
-                type: selectedType,
-                level: parseInt(document.getElementById('level').value),
-                memo: document.getElementById('memo').value.trim()
+                deviceId: DEVICE_ID, name: document.getElementById('userName').value.trim(),
+                date: document.getElementById('date').value, time: document.getElementById('time').value,
+                type: selectedType, level: parseInt(document.getElementById('level').value),
+                memo: document.getElementById('memo').value.trim(),
+                medication: document.getElementById('medication').checked,
+                insulin: document.getElementById('insulin').checked
             };
-
             try {
-                // 1. 서버 저장 시도
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newData)
-                });
-                
-                // 2. 로컬 스토리지에 무조건 백업 저장 (서버 초기화 대비)
-                const localBackup = JSON.parse(localStorage.getItem('sugarApp_backup') || '[]');
-                // 중복 체크 로직 (날짜, 시간, 수치, 타입이 같으면 동일 데이터로 간주)
-                const isDuplicate = localBackup.some(d => d.date === newData.date && d.time === newData.time && d.level === newData.level && d.type === newData.type);
-                if (!isDuplicate) {
-                    localBackup.push(newData);
-                    localStorage.setItem('sugarApp_backup', JSON.stringify(localBackup));
-                }
-
+                const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newData) });
                 if (response.ok) {
-                    document.getElementById('level').value = '';
-                    document.getElementById('memo').value = '';
-                    await loadData();
-                    alert('기록이 저장되었습니다. (브라우저에도 안전하게 백업됨)');
+                    if (document.getElementById('setAlarm').checked) alert('2시간 후 알람이 설정되었습니다. (데모)');
+                    document.getElementById('level').value = ''; document.getElementById('memo').value = '';
+                    document.getElementById('medication').checked = false; document.getElementById('insulin').checked = false;
+                    await loadData(); alert('저장되었습니다.');
                 }
-            } catch (error) {
-                console.error('Save failed:', error);
-                alert('데이터 저장 중 오류가 발생했습니다. 브라우저 로컬 저장소 확인이 필요합니다.');
-            }
+            } catch (e) { alert('저장 실패'); }
         });
 
         async function loadData() {
             try {
                 const response = await fetch(`${API_URL}?deviceId=${DEVICE_ID}`);
-                if (!response.ok) throw new Error('Network response was not ok');
                 let history = await response.json();
-                
-                // 서버가 비어있을 경우 로컬 백업에서 복구 시도
-                if (history.length === 0) {
-                    const localBackup = JSON.parse(localStorage.getItem('sugarApp_backup') || '[]');
-                    if (localBackup.length > 0) {
-                        console.log('Server empty. Syncing from local backup...');
-                        for (const item of localBackup) {
-                            await fetch(API_URL, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(item)
-                            });
-                        }
-                        // 다시 로드
-                        const retryResponse = await fetch(`${API_URL}?deviceId=${DEVICE_ID}`);
-                        history = await retryResponse.json();
-                    }
-                }
-
                 history.sort((a, b) => new Date(`${b.date}T${b.time}`) - new Date(`${a.date}T${a.time}`));
-
-                const nameInput = document.getElementById('userName');
-                if (!nameInput.value) nameInput.value = USER_NAME;
                 updateFilterOptions(history);
-                
                 const userFilter = document.getElementById('filterUser').value;
                 let userHistory = userFilter === 'all' ? history : history.filter(d => d.name === userFilter);
-                
-                const oneMonthAgo = new Date();
-                oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
-                const recentMonthData = userHistory.filter(d => new Date(d.date) >= oneMonthAgo);
-                
-                const threeMonthsAgo = new Date();
-                threeMonthsAgo.setDate(threeMonthsAgo.getDate() - 90);
-                const recentThreeMonthsData = userHistory.filter(d => new Date(d.date) >= threeMonthsAgo);
-                
-                updateStats(recentMonthData, recentThreeMonthsData);
-                
-                const filteredData = filterData(history);
-                renderHistory(filteredData);
-                renderChart(filteredData);
-            } catch (error) {
-                console.error('Load failed:', error);
-            }
+                const now = new Date();
+                const m1 = new Date(now); m1.setDate(now.getDate() - 30);
+                const m3 = new Date(now); m3.setDate(now.getDate() - 90);
+                const recentMonth = userHistory.filter(d => new Date(d.date) >= m1);
+                const recent3Month = userHistory.filter(d => new Date(d.date) >= m3);
+                updateStats(recentMonth, recent3Month);
+                const filtered = filterData(history);
+                renderHistory(filtered); renderChart(filtered);
+                analyzeInsights(userHistory);
+            } catch (e) {}
         }
 
         function updateFilterOptions(data) {
-            const userSelects = [document.getElementById('filterUser'), document.getElementById('reportUser')];
+            const selects = [document.getElementById('filterUser'), document.getElementById('reportUser')];
             const users = [...new Set(data.map(d => d.name))];
-            userSelects.forEach((s) => {
-                const currentVal = s.value;
+            selects.forEach(s => {
+                const val = s.value;
                 s.innerHTML = '<option value="all">전체 사용자</option>';
-                users.forEach(user => {
-                    const opt = document.createElement('option');
-                    opt.value = user; opt.textContent = user;
-                    s.appendChild(opt);
-                });
+                users.forEach(u => { const o = document.createElement('option'); o.value = u; o.textContent = u; s.appendChild(o); });
                 if (isFirstLoad && users.includes(USER_NAME)) s.value = USER_NAME;
-                else s.value = users.includes(currentVal) || currentVal === 'all' ? currentVal : 'all';
+                else s.value = users.includes(val) || val === 'all' ? val : 'all';
             });
             if (data.length > 0) isFirstLoad = false;
         }
 
         function filterData(data) {
-            const userFilter = document.getElementById('filterUser').value;
-            const periodFilter = document.getElementById('filterPeriod').value;
-            const dateContainer = document.getElementById('datePickerContainer');
-            const specificDateInput = document.getElementById('filterSpecificDate');
-            
-            dateContainer.style.display = periodFilter === 'date' ? 'block' : 'none';
-            let filtered = userFilter === 'all' ? data : data.filter(d => d.name === userFilter);
-            
-            if (periodFilter === 'date') {
-                if (specificDateInput.value) filtered = filtered.filter(d => d.date === specificDateInput.value);
-            } else if (periodFilter !== 'all') {
-                const limitDate = new Date();
-                limitDate.setDate(limitDate.getDate() - parseInt(periodFilter));
-                filtered = filtered.filter(d => new Date(d.date) >= limitDate);
+            const user = document.getElementById('filterUser').value;
+            const period = document.getElementById('filterPeriod').value;
+            const search = document.getElementById('searchMemo').value.toLowerCase();
+            document.getElementById('datePickerContainer').style.display = period === 'date' ? 'block' : 'none';
+            let f = user === 'all' ? data : data.filter(d => d.name === user);
+            if (period === 'date') {
+                const d = document.getElementById('filterSpecificDate').value;
+                if (d) f = f.filter(x => x.date === d);
+            } else if (period !== 'all') {
+                const l = new Date(); l.setDate(l.getDate() - parseInt(period));
+                f = f.filter(x => new Date(x.date) >= l);
             }
-            return filtered;
+            if (search) f = f.filter(x => x.memo.toLowerCase().includes(search));
+            return f;
         }
 
-        function updateStats(monthData, threeMonthData) {
-            const fasting = monthData.filter(d => d.type === 'fasting').map(d => d.level);
-            const post = monthData.filter(d => d.type === 'postprandial').map(d => d.level);
-            
-            const set = (lvls, pfx) => {
-                const el = (s) => document.getElementById(pfx + s);
-                if (!lvls.length) { el('Avg').innerText = '-'; el('Max').innerText = '-'; el('Min').innerText = '-'; return; }
-                el('Avg').innerText = Math.round(lvls.reduce((a, b) => a + b) / lvls.length);
-                el('Max').innerText = Math.max(...lvls);
-                el('Min').innerText = Math.min(...lvls);
+        function updateStats(month, threeMonth) {
+            const f = month.filter(d => d.type === 'fasting').map(d => d.level);
+            const p = month.filter(d => d.type === 'postprandial').map(d => d.level);
+            const set = (l, id) => {
+                if (!l.length) { ['Avg', 'Max', 'Min'].forEach(s => document.getElementById(id + s).innerText = '-'); return; }
+                const avg = Math.round(l.reduce((a, b) => a + b) / l.length);
+                document.getElementById(id + 'Avg').innerText = avg;
+                document.getElementById(id + 'Max').innerText = Math.max(...l);
+                document.getElementById(id + 'Min').innerText = Math.min(...l);
+                if (id === 'f') updateGauge(avg);
             };
-
-            set(fasting, 'f'); set(post, 'p');
-
-            const hba1cEl = document.getElementById('hba1cValue');
-            const allThreeMonthLevels = threeMonthData.map(d => d.level);
-            
-            if (allThreeMonthLevels.length > 0) {
-                const totalAvg = allThreeMonthLevels.reduce((a, b) => a + b) / allThreeMonthLevels.length;
-                const hba1c = (totalAvg + 46.7) / 28.7;
-                hba1cEl.innerText = hba1c.toFixed(1);
-            } else {
-                hba1cEl.innerText = '-';
-            }
-        }
-
-        async function generateReport() {
-            try {
-                // 리포트 생성 시에도 내 기기 데이터만 사용
-                const response = await fetch(`${API_URL}?deviceId=${DEVICE_ID}`);
-                const history = await response.json();
-                
-                const user = document.getElementById('reportUser').value;
-                const month = document.getElementById('reportMonth').value;
-                if (!month) return alert('월을 선택하세요.');
-                let filtered = history.filter(d => d.date.startsWith(month));
-                if (user !== 'all') filtered = filtered.filter(d => d.name === user);
-                const content = document.getElementById('reportContent');
-                const empty = document.getElementById('reportEmpty');
-                if (!filtered.length) { content.style.display = 'none'; empty.innerText = '데이터가 없습니다.'; empty.style.display = 'block'; return; }
-                content.style.display = 'block'; empty.style.display = 'none';
-                document.getElementById('reportTitle').innerText = `${month} 혈당 보고서 (${user === 'all' ? '전체' : user})`;
-                const daily = {};
-                filtered.forEach(d => { if (!daily[d.date]) daily[d.date] = { f: [], p: [] }; daily[d.date][d.type === 'fasting' ? 'f' : 'p'].push(d.level); });
-                const dates = Object.keys(daily).sort();
-                const fAvgs = dates.map(d => daily[d].f.length ? Math.round(daily[d].f.reduce((a,b)=>a+b)/daily[d].f.length) : null);
-                const pAvgs = dates.map(d => daily[d].p.length ? Math.round(daily[d].p.reduce((a,b)=>a+b)/daily[d].p.length) : null);
-                renderMonthChart(dates, fAvgs, pAvgs);
-                let html = `<table class="report-table"><thead><tr><th>날짜</th><th>공복(Avg)</th><th>식후(Avg)</th></tr></thead><tbody>`;
-                dates.forEach((d, i) => html += `<tr><td>${d.split('-')[2]}일</td><td>${fAvgs[i]||'-'}</td><td>${pAvgs[i]||'-'}</td></tr>`);
-                document.getElementById('reportTableContainer').innerHTML = html + '</tbody></table>';
-            } catch (error) {
-                console.error('Report generation failed:', error);
-            }
-        }
-
-        function renderMonthChart(labels, f, p) {
-            const ctx = document.getElementById('monthChart').getContext('2d');
-            if (monthChart) monthChart.destroy();
-            monthChart = new Chart(ctx, {
-                type: 'line',
-                data: { labels: labels.map(d => d.split('-')[2] + '일'), datasets: [
-                    { label: '공복', data: f, borderColor: '#2ecc71', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, tension: 0.1, spanGaps: true },
-                    { label: '식후', data: p, borderColor: '#3498db', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, tension: 0.1, spanGaps: true }
-                ]},
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } }
-            });
+            set(f, 'f'); set(p, 'p');
+            const h = document.getElementById('hba1cValue');
+            const lvls = threeMonth.map(d => d.level);
+            if (lvls.length) {
+                const avg = lvls.reduce((a, b) => a + b) / lvls.length;
+                h.innerText = ((avg + 46.7) / 28.7).toFixed(1);
+            } else h.innerText = '-';
+            if (month.length) updateTrend(month.reduce((a,b)=>a+b.level,0)/month.length, month);
         }
 
         function renderHistory(data) {
             const list = document.getElementById('historyList');
             if (!data.length) { list.innerHTML = '<div style="text-align:center; padding:2rem; color:#94a3b8;">기록이 없습니다.</div>'; return; }
-            const grouped = data.reduce((acc, item) => { if (!acc[item.date]) acc[item.date] = []; acc[item.date].push(item); return acc; }, {});
-            const sorted = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+            const grouped = data.reduce((acc, i) => { (acc[i.date] = acc[i.date] || []).push(i); return acc; }, {});
             let html = '';
-            sorted.forEach(date => {
-                const items = grouped[date];
-                const avg = Math.round(items.reduce((s, i) => s + i.level, 0) / items.length);
-                html += `<div class="date-header"><span>📅 ${date}</span><span>평균: ${avg}</span></div>`;
-                items.forEach(item => {
-                    const status = getStatus(item.level, item.type);
+            Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a)).forEach(d => {
+                const items = grouped[d];
+                html += `<div class="date-header"><span>📅 ${d}</span><span>평균: ${Math.round(items.reduce((s, x) => s + x.level, 0) / items.length)}</span></div>`;
+                items.forEach(i => {
+                    const s = getStatus(i.level, i.type);
                     html += `<div class="history-item"><div class="history-info">
-                        <div style="font-weight:700; font-size:0.95rem;"><span class="status-dot ${status.class}"></span>${item.name} <span style="font-weight:400; color:#94a3b8; font-size:0.8rem;">${item.time}</span></div>
-                        <div class="type-tag ${item.type === 'fasting' ? 'type-fasting' : 'type-postprandial'}">${item.type === 'fasting' ? '공복' : '식후'}</div>
-                        ${item.memo ? `<div class="memo-text">${item.memo}</div>` : ''}</div>
-                        <div style="display:flex; align-items:center; gap:12px;"><div class="level-badge ${status.class}">${item.level}</div>
-                        <button class="btn-delete" onclick="deleteRecord(${item.id})">×</button></div></div>`;
+                        <div style="font-weight:700; font-size:0.95rem;"><span class="status-dot ${s.class}"></span>${i.name} <span style="font-weight:400; color:#94a3b8; font-size:0.8rem;">${i.time}</span></div>
+                        <div class="type-tag ${i.type === 'fasting' ? 'type-fasting' : 'type-postprandial'}">${i.type === 'fasting' ? '공복' : '식후'}</div>
+                        ${i.medication ? '<span class="med-tag">💊 약</span>' : ''} ${i.insulin ? '<span class="med-tag">💉 인슐린</span>' : ''}
+                        ${i.memo ? `<div class="memo-text">${i.memo}</div>` : ''}</div>
+                        <div style="display:flex; align-items:center; gap:12px;"><div class="level-badge ${s.class}">${i.level}</div>
+                        <button class="btn-delete" onclick="deleteRecord(${i.id})">×</button></div></div>`;
                 });
             });
             list.innerHTML = html;
@@ -825,85 +802,122 @@
         function renderChart(data) {
             const ctx = document.getElementById('sugarChart').getContext('2d');
             const daily = {};
-            data.forEach(item => { if (!daily[item.date]) daily[item.date] = { f: [], p: [] }; daily[item.date][item.type === 'fasting' ? 'f' : 'p'].push(item.level); });
+            data.forEach(i => { (daily[i.date] = daily[i.date] || { f: [], p: [] })[i.type === 'fasting' ? 'f' : 'p'].push(i.level); });
             const dates = Object.keys(daily).sort().slice(-10);
-            const f = dates.map(d => daily[d].f.length ? Math.round(daily[d].f.reduce((a,b)=>a+b)/daily[d].f.length) : null);
-            const p = dates.map(d => daily[d].p.length ? Math.round(daily[d].p.reduce((a,b)=>a+b)/daily[d].p.length) : null);
+            const f = dates.map(d => daily[d].f.length ? Math.round(daily[d].f.reduce((a, b) => a + b) / daily[d].f.length) : null);
+            const p = dates.map(d => daily[d].p.length ? Math.round(daily[d].p.reduce((a, b) => a + b) / daily[d].p.length) : null);
             if (sugarChart) sugarChart.destroy();
             if (!dates.length) return;
             sugarChart = new Chart(ctx, {
                 type: 'line',
                 data: { labels: dates.map(d => d.slice(5)), datasets: [
-                    { label: '공복', data: f, borderColor: '#2ecc71', backgroundColor: 'transparent', borderWidth: 3, pointRadius: 4, tension: 0.3, spanGaps: true },
-                    { label: '식후', data: p, borderColor: '#3498db', backgroundColor: 'transparent', borderWidth: 3, pointRadius: 4, tension: 0.3, spanGaps: true }
+                    { label: '공복', data: f, borderColor: '#2ecc71', backgroundColor: 'transparent', borderWidth: 3, tension: 0.3, spanGaps: true },
+                    { label: '식후', data: p, borderColor: '#3498db', backgroundColor: 'transparent', borderWidth: 3, tension: 0.3, spanGaps: true }
                 ]},
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { suggestedMin: 70, suggestedMax: 180 }, x: { ticks: { font: { size: 10 } } } }, plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { size: 10 } } } } }
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { suggestedMin: 70, suggestedMax: 180 } } }
             });
         }
 
         async function exportCSV() {
-            try {
-                const response = await fetch(`${API_URL}?deviceId=${DEVICE_ID}`);
-                const history = await response.json();
-                if (!history.length) return alert('데이터가 없습니다.');
-                let csv = '\uFEFF이름,날짜,시간,구분,혈당(mg/dL),상태,메모\n';
-                history.forEach(d => csv += `${d.name},${d.date},${d.time},${d.type === 'fasting' ? '공복' : '식후'},${d.level},${getStatus(d.level, d.type).label},"${d.memo || ''}"\n`);
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `blood_sugar_${new Date().toISOString().split('T')[0]}.csv`; link.click();
-            } catch (error) {
-                console.error('Export CSV failed:', error);
-            }
+            const res = await fetch(`${API_URL}?deviceId=${DEVICE_ID}`);
+            const data = await res.json();
+            if (!data.length) return alert('데이터 없음');
+            let csv = '\uFEFF이름,날짜,시간,구분,혈당,상태,메모\n';
+            data.forEach(d => csv += `${d.name},${d.date},${d.time},${d.type === 'fasting' ? '공복' : '식후'},${d.level},${getStatus(d.level, d.type).label},"${d.memo || ''}"\n`);
+            const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+            link.download = `blood_sugar_${new Date().toISOString().split('T')[0]}.csv`; link.click();
         }
 
         async function exportData() {
-            try {
-                const response = await fetch(`${API_URL}?deviceId=${DEVICE_ID}`);
-                const data = await response.json();
-                const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-                const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `backup_${new Date().toISOString().split('T')[0]}.json`; link.click();
-            } catch (error) {
-                console.error('Export JSON failed:', error);
-            }
+            const res = await fetch(`${API_URL}?deviceId=${DEVICE_ID}`);
+            const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([JSON.stringify(await res.json())], { type: 'application/json' }));
+            link.download = `backup_${new Date().toISOString().split('T')[0]}.json`; link.click();
         }
 
-        async function importData(event) {
-            const file = event.target.files[0];
-            const reader = new FileReader();
-            reader.onload = async (e) => { 
-                try { 
-                    const data = JSON.parse(e.target.result);
-                    for (const item of data) {
-                        delete item.id;
-                        item.deviceId = DEVICE_ID; // 복구 시에도 내 기기 ID 부여
-                        await fetch(API_URL, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(item)
-                        });
-                    }
-                    await loadData(); 
-                    alert('복구 완료!'); 
-                } catch(err) { 
-                    alert('파일 오류'); 
-                } 
+        async function importData(e) {
+            const f = e.target.files[0]; const reader = new FileReader();
+            reader.onload = async (x) => {
+                const data = JSON.parse(x.target.result);
+                for (const i of data) { delete i.id; i.deviceId = DEVICE_ID; await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(i) }); }
+                await loadData(); alert('복구 완료');
             };
-            reader.readAsText(file);
+            reader.readAsText(f);
         }
 
-        window.deleteRecord = async function(id) { 
-            if (confirm('삭제하시겠습니까?')) { 
-                try {
-                    // 삭제 전 내 기기의 데이터인지 서버에서 체크하면 좋으나, 
-                    // 일단 ID 기반으로 삭제 진행 (deviceId 쿼리 스트링은 json-server DELETE에서 기본 지원 안 함)
-                    const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-                    if (response.ok) {
-                        await loadData(); 
-                    }
-                } catch (error) {
-                    console.error('Delete failed:', error);
-                }
-            } 
-        };
+        window.deleteRecord = async (id) => { if (confirm('삭제?')) { await fetch(`${API_URL}/${id}`, { method: 'DELETE' }); await loadData(); } };
+
+        function quickFill(t, m) {
+            document.querySelectorAll('.type-btn').forEach(b => { b.classList.remove('active'); if (b.dataset.type === t) b.classList.add('active'); });
+            selectedType = t; setCurrentTime(); document.getElementById('memo').value = m + ': '; document.getElementById('level').focus();
+        }
+
+        function adjustTime(n) {
+            const t = document.getElementById('time'); const [h, m] = t.value.split(':').map(Number);
+            const d = new Date(); d.setHours(h, m + n); t.value = d.toTimeString().slice(0, 5);
+        }
+
+        function setTargetHbA1c() {
+            const t = prompt('목표 당화혈색소(%)', document.getElementById('targetHbA1c').innerText);
+            if (t && !isNaN(t)) { document.getElementById('targetHbA1c').innerText = t; localStorage.setItem('sugarApp_targetHbA1c', t); loadData(); }
+        }
+
+        function updateGauge(a) {
+            const g = document.getElementById('sugarGauge'); let w = (a / 250) * 100; g.style.width = Math.min(w, 100) + '%';
+            g.style.backgroundColor = a < 70 ? '#e67e22' : a < 126 ? 'var(--status-normal)' : 'var(--status-danger)';
+        }
+
+        function analyzeInsights(data) {
+            if (data.length < 5) return;
+            const s = document.getElementById('insightSection'); const c = document.getElementById('insightContent');
+            s.style.display = 'block';
+            const high = data.slice(0, 10).filter(d => (d.type === 'fasting' && d.level >= 126) || (d.type === 'postprandial' && d.level >= 200)).length;
+            let m = "💡 분석: ";
+            if (high >= 4) m += "최근 수치가 높습니다. 식단 조절이 필요합니다.";
+            else if (high === 0) m += "아주 좋습니다! 현재 습관을 유지하세요.";
+            else m += "대체로 안정적입니다.";
+            const night = data.filter(d => parseInt(d.time.split(':')[0]) >= 18 && d.level >= 160).length;
+            if (night >= 3) m += " 저녁 시간대 관리에 더 신경 써주세요.";
+            c.innerText = m;
+        }
+
+        function updateTrend(curr, hist) {
+            const i = document.getElementById('trendIndicator'); if (hist.length < 10) return;
+            const prev = hist.slice(10, 20); if (!prev.length) return;
+            const d = curr - (prev.reduce((a, b) => a + b.level, 0) / prev.length);
+            i.innerHTML = Math.abs(d) < 5 ? '<span class="trend-indicator trend-stable">─ 안정</span>' :
+                          d > 0 ? `<span class="trend-indicator trend-up">▲ 상승 (${Math.round(d)})</span>` :
+                          `<span class="trend-indicator trend-down">▼ 하락 (${Math.round(Math.abs(d))})</span>`;
+        }
+
+        async function generateReport() {
+            const res = await fetch(`${API_URL}?deviceId=${DEVICE_ID}`);
+            const hist = await res.json();
+            const u = document.getElementById('reportUser').value, m = document.getElementById('reportMonth').value;
+            if (!m) return alert('월 선택');
+            let f = hist.filter(x => x.date.startsWith(m)); if (u !== 'all') f = f.filter(x => x.name === u);
+            const content = document.getElementById('reportContent'), empty = document.getElementById('reportEmpty');
+            if (!f.length) { content.style.display = 'none'; empty.innerText = '데이터 없음'; empty.style.display = 'block'; return; }
+            content.style.display = 'block'; empty.style.display = 'none';
+            document.getElementById('reportTitle').innerText = `${m} 보고서 (${u === 'all' ? '전체' : u})`;
+            const day = {}; f.forEach(x => { day[x.date] = day[x.date] || { f: [], p: [] }; day[x.date][x.type === 'fasting' ? 'f' : 'p'].push(x.level); });
+            const dates = Object.keys(day).sort();
+            const fa = dates.map(d => day[d].f.length ? Math.round(day[d].f.reduce((a, b) => a + b) / day[d].f.length) : null);
+            const pa = dates.map(d => day[d].p.length ? Math.round(day[d].p.reduce((a, b) => a + b) / day[d].p.length) : null);
+            renderMonthChart(dates, fa, pa);
+            let h = '<table class="report-table"><thead><tr><th>날짜</th><th>공복</th><th>식후</th></tr></thead><tbody>';
+            dates.forEach((d, i) => h += `<tr><td>${d.split('-')[2]}일</td><td>${fa[i] || '-'}</td><td>${pa[i] || '-'}</td></tr>`);
+            document.getElementById('reportTableContainer').innerHTML = h + '</tbody></table>';
+        }
+
+        function renderMonthChart(l, f, p) {
+            const ctx = document.getElementById('monthChart').getContext('2d'); if (monthChart) monthChart.destroy();
+            monthChart = new Chart(ctx, {
+                type: 'line', data: { labels: l.map(x => x.split('-')[2] + '일'), datasets: [
+                    { label: '공복', data: f, borderColor: '#2ecc71', tension: 0.1, spanGaps: true },
+                    { label: '식후', data: p, borderColor: '#3498db', tension: 0.1, spanGaps: true }
+                ]}, options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
     </script>
 </body>
 </html>

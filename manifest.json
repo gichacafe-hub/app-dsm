@@ -1,0 +1,17 @@
+{
+  "name": "당뇨 관리 PRO",
+  "short_name": "당뇨PRO",
+  "description": "혈당 관리 매니저 PRO 2.0",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f0f2f5",
+  "theme_color": "#27ae60",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2864/2864353.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
